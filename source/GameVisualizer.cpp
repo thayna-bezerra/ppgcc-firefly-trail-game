@@ -2,6 +2,15 @@
 
 #include "Global.hpp"
 
+#include <stdexcept>
+
+GameVisualizer::GameVisualizer(TileMap* tileMap)
+    : m_tileMap(tileMap)
+{
+    if (m_tileMap == nullptr)
+        throw std::invalid_argument("GameVisualizer: null tileMap");
+}
+
 void GameVisualizer::registerNPC(NPC* the_npc)
 {
     if (the_npc == nullptr)
@@ -26,14 +35,23 @@ bool GameVisualizer::init(unsigned widthPixels, unsigned heightPixels)
         return false;
 
     m_window.setFramerateLimit(60);
-    m_cols = static_cast<int>(widthPixels / TILE_SIZE);
-    m_rows = static_cast<int>(heightPixels / TILE_SIZE);
+
+    const float mapWidth  = static_cast<float>(m_tileMap->width())  * TILE_SIZE;
+    const float mapHeight = static_cast<float>(m_tileMap->height()) * TILE_SIZE;
+    m_view.setSize(mapWidth, mapHeight);
+    m_view.setCenter(mapWidth / 2.0f, mapHeight / 2.0f);
+    m_window.setView(m_view);
     return true;
 }
 
 void GameVisualizer::setInitialCenter(int col, int row)
 {
-    if (col < 0 || row < 0 || col >= m_cols || row >= m_rows)
+    if (col < 0 || row < 0 ||
+        col >= m_tileMap->width() ||
+        row >= m_tileMap->height())
+        return;
+
+    if (m_tileMap->isWall(col, row))
         return;
 
     m_centerCol = col;
@@ -45,6 +63,11 @@ void GameVisualizer::setInitialCenter(int col, int row)
 void GameVisualizer::setBackgroundColor(std::uint8_t r, std::uint8_t g, std::uint8_t b)
 {
     m_backgroundColor = sf::Color(r, g, b);
+}
+
+void GameVisualizer::setWallColor(std::uint8_t r, std::uint8_t g, std::uint8_t b)
+{
+    m_wallColor = sf::Color(r, g, b);
 }
 
 void GameVisualizer::setUpdateFunction(UpdateFunction function)
@@ -95,7 +118,12 @@ void GameVisualizer::tryMoveCenter(int deltaCol, int deltaRow)
     const int newCol = m_centerCol + deltaCol;
     const int newRow = m_centerRow + deltaRow;
 
-    if (newCol < 0 || newRow < 0 || newCol >= m_cols || newRow >= m_rows)
+    if (newCol < 0 || newRow < 0 ||
+        newCol >= m_tileMap->width() ||
+        newRow >= m_tileMap->height())
+        return;
+
+    if (m_tileMap->isWall(newCol, newRow))
         return;
 
     m_centerCol = newCol;
@@ -107,6 +135,22 @@ void GameVisualizer::tryMoveCenter(int deltaCol, int deltaRow)
 void GameVisualizer::render()
 {
     m_window.clear(m_backgroundColor);
+
+    sf::RectangleShape tile(sf::Vector2f(TILE_SIZE, TILE_SIZE));
+    tile.setFillColor(m_wallColor);
+
+    for (int row = 0; row < m_tileMap->height(); ++row)
+    {
+        for (int col = 0; col < m_tileMap->width(); ++col)
+        {
+            if (m_tileMap->at(col, row) == WALL_TILE)
+            {
+                tile.setPosition(static_cast<float>(col) * TILE_SIZE,
+                                 static_cast<float>(row) * TILE_SIZE);
+                m_window.draw(tile);
+            }
+        }
+    }
 
     for (NPC* npc : m_npc)
     {

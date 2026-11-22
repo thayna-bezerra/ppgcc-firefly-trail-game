@@ -1,52 +1,67 @@
 #pragma once
 
 #include "NPC.hpp"
+#include "TileMap.hpp"
 
 #include <SFML/Graphics.hpp>
 #include <cstdint>
 #include <vector>
 
 /**
- * @brief Opens the SFML window, reads the arrow keys and draws the NPCs.
+ * @brief Displays a Dungeon2D/TileMap scenario using SFML, 
+ *    and displays NPC objects.
  *
- * Adapted from the professor's DungeonVisualizer, without the dungeon and the
- * tilemap (they are not part of this step). The window is divided in tiles of
- * TILE_SIZE pixels. A press of an arrow key moves the centre of the view by one
- * tile, and the centre never leaves the window. The class keeps the position of
- * the centre, in tile units, in m_centerX and m_centerY; the game copies it to
- * the player body.
+ * The class deliberately exposes no SFML objects to its users.  A TileMap
+ * cell is displayed as a TILE_SIZE x TILE_SIZE square.
+ *
+ * The class relies on the tilemap matrix to display walls.
+ *
+ * The position of a NPC is given by body.position in tile coordinates, 
+ *   and a NPC has the same size of a tile.
+ *
+ * Navigation is tile-based: an arrow-key press attempts to move the centre
+ * of the view by one tile.  The move is accepted only when the destination
+ * cell is EMPTY_TILE, so the centre of the view is never placed on a wall.
+ * 
+ * The class updates variables m_centerX and m_centerY with the coordinates
+ *  of the centre of the view, in tile units.
  */
 class GameVisualizer {
 public:
 
     float m_centerX{0.0f}, m_centerY{0.0f};
 
-    /// Called once per rendered frame with the elapsed time (s) and the last event.
     using UpdateFunction = void (*)(float deltaTime, sf::Event event);
     UpdateFunction m_updateFunction{nullptr};
+
+    explicit GameVisualizer(TileMap* tileMap);
 
     /// The pointed-to NPCs must be alive while this object is used.
     void registerNPC(NPC* the_npc);
     std::vector<NPC*> m_npc;
 
-    /// Creates the window. Returns true if it was created.
+    /// Creates the window and fits the view to the whole map. Returns true on success.
     bool init(unsigned widthPixels, unsigned heightPixels);
 
-    /// Initial centre, in tile coordinates. Ignored if outside the window.
+    /// Initial centre, in TileMap coordinates. If the cell is a wall or outside
+    /// the map, the centre is left unchanged.
     void setInitialCenter(int col, int row);
 
     void setBackgroundColor(std::uint8_t r, std::uint8_t g, std::uint8_t b);
+    void setWallColor(std::uint8_t r, std::uint8_t g, std::uint8_t b);
     void setUpdateFunction(UpdateFunction function);
 
-    /// Runs the event/render loop until the window is closed (or Esc).
+    /// Runs the event/render loop until the window is closed (or Esc is pressed).
     void run();
 
 private:
+    TileMap* m_tileMap;
     sf::RenderWindow m_window;
-    sf::Color m_backgroundColor{sf::Color::White};
+    sf::View m_view;
 
-    int m_cols{0};
-    int m_rows{0};
+    sf::Color m_backgroundColor{sf::Color::White};
+    sf::Color m_wallColor{139, 69, 19};
+
     int m_centerCol{0};
     int m_centerRow{0};
 
