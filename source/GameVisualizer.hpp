@@ -5,6 +5,7 @@
 
 #include <SFML/Graphics.hpp>
 #include <cstdint>
+#include <string>
 #include <vector>
 
 /**
@@ -31,6 +32,11 @@ public:
 
     float m_centerX{0.0f}, m_centerY{0.0f};
 
+    int m_lives{3};
+    int m_points{0};
+
+    [[nodiscard]] std::string scoreboardText() const;
+
     using UpdateFunction = void (*)(float deltaTime, sf::Event event);
     UpdateFunction m_updateFunction{nullptr};
 
@@ -40,7 +46,6 @@ public:
     void registerNPC(NPC* the_npc);
     std::vector<NPC*> m_npc;
 
-    /// Creates the window and fits the view to the whole map. Returns true on success.
     bool init(unsigned widthPixels, unsigned heightPixels);
 
     /// Initial centre, in TileMap coordinates. If the cell is a wall or outside
@@ -58,6 +63,9 @@ private:
     TileMap* m_tileMap;
     sf::RenderWindow m_window;
     sf::View m_view;
+
+    sf::Font m_font;
+    sf::Text m_scoreText;
 
     sf::Color m_backgroundColor{sf::Color::White};
     sf::Color m_wallColor{139, 69, 19};

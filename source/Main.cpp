@@ -51,7 +51,8 @@ int main () {
     view.setBackgroundColor (200, 255, 200);
     view.setWallColor       (139, 69, 19);
 
-    view.init (1024, 768);
+    if (!view.init (1024, 768))
+        return 1;
     view.setInitialCenter (3, 4);    
 
     view.run ();

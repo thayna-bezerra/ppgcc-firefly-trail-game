@@ -2,6 +2,7 @@
 
 #include "Global.hpp"
 
+#include <iostream>
 #include <stdexcept>
 
 GameVisualizer::GameVisualizer(TileMap* tileMap)
@@ -25,10 +26,28 @@ void GameVisualizer::registerNPC(NPC* the_npc)
     m_npc.push_back(the_npc);
 }
 
+std::string GameVisualizer::scoreboardText() const
+{
+    return "VIDAS: " + std::to_string(m_lives) + "    PONTOS: " + std::to_string(m_points);
+}
+
 bool GameVisualizer::init(unsigned widthPixels, unsigned heightPixels)
 {
     if (widthPixels == 0 || heightPixels == 0)
         return false;
+
+    if (!m_font.loadFromFile("DejaVuSans.ttf"))
+    {
+        std::cerr << "Erro: nao foi possivel carregar a fonte DejaVuSans.ttf" << std::endl;
+        return false;
+    }
+
+    m_scoreText.setFont(m_font);
+    m_scoreText.setCharacterSize(28);
+    m_scoreText.setFillColor(sf::Color::White);
+    m_scoreText.setOutlineColor(sf::Color::Black);
+    m_scoreText.setOutlineThickness(2.0f);
+    m_scoreText.setPosition(20.0f, 14.0f);
 
     m_window.create(sf::VideoMode(widthPixels, heightPixels), "Firefly Trail");
     if (!m_window.isOpen())
@@ -164,6 +183,11 @@ void GameVisualizer::render()
 
         m_window.draw(npc->m_sprite);
     }
+
+    m_window.setView(m_window.getDefaultView());
+    m_scoreText.setString(scoreboardText());
+    m_window.draw(m_scoreText);
+    m_window.setView(m_view);
 
     m_window.display();
 }
