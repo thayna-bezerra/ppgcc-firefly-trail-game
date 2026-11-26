@@ -17,10 +17,14 @@
 #include "NPC.hpp"
 #include "Entity.hpp"
 #include "GameVisualizer.hpp"
+#include "CollisionManager.hpp"
+
+static const float COLLISION_HALF_EXTENT = 0.45f;
 
 NPC       Player;
 TileMap   map;
 GameVisualizer view (&map);
+CollisionManager collisionManager;
 
 //--------------------------------------------------------------
 
@@ -45,6 +49,9 @@ int main () {
     }
 
     Player.sprite ("um-quadrado.png");
+    Player.id = PLAYER_ID;
+    Player.collision.halfExtents = Vector2D (COLLISION_HALF_EXTENT, COLLISION_HALF_EXTENT);
+    collisionManager.add (&Player);
     view.registerNPC (&Player);
 
     view.setUpdateFunction  (UpdateInsideGameLoop);
